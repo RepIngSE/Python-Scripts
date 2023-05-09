@@ -70,25 +70,23 @@ def email_downloader():
             if '.zip' in f:
                 os.remove(os.path.join(downloadDir, f))
             else:
-            shutil.rmtree(os.path.join(downloadDir, f))
+                shutil.rmtree(os.path.join(downloadDir, f))
 
         #############################################################################
         # * Get Email Attachments Code Block
         #Email User Data:
         email_user = 'sara.cruz02@24-7intouch.com'
-        email_pass = 'Saragabriela2604*'
+        email_pass = 'ljphfkazgebxdskd'
         host = 'imap.gmail.com'
         port= '993'
 
         # * Login to Email via IMAP with User an Pass specified. Selecting Inbox Folder where our emails at.
         print("Login to Email!!!")
-        logger_module.pyLogger('info',msg='Login to email')
         mail = imaplib.IMAP4_SSL(host,port)
         mail.login(email_user, email_pass)
-        mail.select('""')
+        mail.select('"Vivint EOD Data"')
 
         print("Searching mails...")
-        logger_module.pyLogger('running',msg='Searching mails')
         now = datetime.now() - timedelta(days=1)
         today = datetime(now.year,now.month, now.day, 0, 0, 0)
         today = today.strftime('%d-%b-%Y')
@@ -126,7 +124,6 @@ def email_downloader():
                                     savePath = savePath.replace("24/7","")
                                     if not os.path.isfile(savePath):
                                         print("Downloading: ", filename)   
-                                        logger_module.pyLogger('running',msg='Downloading: {}'.format(filename))    
                                         fp = open(savePath, 'wb')
                                         fp.write(fileData)
                                         fp.close()
@@ -138,104 +135,107 @@ def email_downloader():
                     print('Error with email.Error is: {}'.format(e))
                     pass
             print("All Attachments Downloaded succesfully!!!")
+        except Exception as e:
+            print('Error with email extraction: {}'.format(e))
     except Exception as e:
-        print('Error with email extraction: {}'.format(e))
-
+        print('Error with email fuction: {}'.format(e))
 
 ### Workbook Pandas Parser
-def vivintEODParser(sheet,filelist,lobs):
-    # * Parsing all Downloaded Attachments to a dataframe
-    spreadSheets = {
-        'Collections' = ''
-        ,'Solutions' = ''
-    }
-    for f in filelist:
-        try:
-            for key, val in tqdm(lobs.iteritems()):
-                for lob in val:
-                    print("Uploading Data for {}:".format(lob))
+# def vivintEODParser(sheet,filelist,lobs):
+#     # * Parsing all Downloaded Attachments to a dataframe
+#     spreadSheets = {
+#         'Collections' = '1q_BLGm27Ei45FnHJMc8ArVUwY_J8sUkTGvg8IxiwEBE'
+#         ,'Solutions' = '1G3JZXqkaPsCVjQCF0hp1BdRbNpuzNZ7awThYOxtUXrc'
+#         ,'Retention' = '1cVaffllFNcMOrnh8Y_IHPH3UnARl_5CDPsg_1tK9etg'
+#         ,'Moves' = '1o6DsJr3GplCojzReWLXa_p-N0CCIq9T3ufkWH7vm-wE'
+#     }
+#     for f in filelist:
+#         try:
+#             for key, val in tqdm(lobs.iteritems()):
+#                 for lob in val:
+#                     print("Uploading Data for {}:".format(lob))
 
-                    try:
+#                     try:
                     
-                        data = pd.read_excel(spFile, sheet_name=sheet)
+#                         data = pd.read_excel(spFile, sheet_name=sheet)
 
-                        if sheet = "Agent Schedules":
+#                         if sheet = "Agent Schedules":
 
-                            data = data[(data['team_name']=='24-7 Intouch New Hire') | (data['team_name']=='24-7 Intouch Guatemala')]
+#                             data = data[(data['team_name']=='24-7 Intouch New Hire') | (data['team_name']=='24-7 Intouch Guatemala')]
 
-                            data = data.replace({np.nan: None})
-                            cols = [c for c in data.columns if 'Unnamed' not in c]
-                            data = data[cols]
+#                             data = data.replace({np.nan: None})
+#                             cols = [c for c in data.columns if 'Unnamed' not in c]
+#                             data = data[cols]
 
-                            data["start_time"] = data["start_time"].str.replace(' CST', '', regex=True)
-                            data["start_time"] = data["start_time"].str.replace(' CDT', '', regex=True)
+#                             data["start_time"] = data["start_time"].str.replace(' CST', '', regex=True)
+#                             data["start_time"] = data["start_time"].str.replace(' CDT', '', regex=True)
 
-                            data["start_time"] = pd.to_datetime(data["start_time"],infer_datetime_format=True)
+#                             data["start_time"] = pd.to_datetime(data["start_time"],infer_datetime_format=True)
 
 
-                        vals = list(data.itertuples(index=False, name=None))
-                        spreadsheet = spreadSheets[key]
-                        if not vals:
-                            print("Empty Dataframe...")
-                        else:
-                            gsheetsUploader(vals,spreadsheet)
+#                         vals = list(data.itertuples(index=False, name=None))
+#                         spreadsheet = spreadSheets[key]
+#                         if not vals:
+#                             print("Empty Dataframe...")
+#                         else:
+#                             gsheetsUploader(vals,spreadsheet)
 
-                    except Exception as e:
-                        print('Error parsing file: {} . Error is: {}'.format(f,e))
-                        pass
+#                     except Exception as e:
+#                         print('Error parsing file: {} . Error is: {}'.format(f,e))
+#                         pass
 
-        except Exception as e:
-            print(e)
-            logger_module.pyLogger('critical',msg='Error parsing file: {} . Error is: {}'.format(f,e))
-            pass
+#         except Exception as e:
+#             print(e)
+#             logger_module.pyLogger('critical',msg='Error parsing file: {} . Error is: {}'.format(f,e))
+#             pass
 
-def gsheetsUploader(data,sh):
-     try:
-        logger_module.pyLogger('running',msg='Connecting to Google services accounts with secret key')
-        print('Connecting to Google services accounts with secret key')
-        gc = gspread.service_account(filename=os.path.join(jsonCred,'cli-globo-d728b37c0cf6.json'))
+# def gsheetsUploader(data,sh):
+#      try:
+#         logger_module.pyLogger('running',msg='Connecting to Google services accounts with secret key')
+#         print('Connecting to Google services accounts with secret key')
+#         gc = gspread.service_account(filename=os.path.join(jsonCred,'cli-globo-d728b37c0cf6.json'))
 
-        print('Opening SunCountry REPORT RAW Spreadsheet')
-        spreadSheetQuery = gc.open_by_key('1ePIqaEE3j4_Q9f-eWzCtfZY9F0s-jCFe909kvFcJk44')
+#         print('Opening SunCountry REPORT RAW Spreadsheet')
+#         spreadSheetQuery = gc.open_by_key('1ePIqaEE3j4_Q9f-eWzCtfZY9F0s-jCFe909kvFcJk44')
 
-        rawdataNICE = ["CallsSummary",'AgentProductivity','AuxCodesRAW','AgentActivityRAW','LoginLogoutRAW']
+#         rawdataNICE = ["CallsSummary",'AgentProductivity','AuxCodesRAW','AgentActivityRAW','LoginLogoutRAW']
 
-        for sheet in rawdataNICE:
-            try:
-                logger_module.pyLogger('running',msg='Selecting data sheet')
-                print('Selecting {} '.format(sheet))
+#         for sheet in rawdataNICE:
+#             try:
+#                 logger_module.pyLogger('running',msg='Selecting data sheet')
+#                 print('Selecting {} '.format(sheet))
                 
-                logger_module.pyLogger('running',msg='Parsing selected sheet')
-                # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
-                sheetQuery = spreadSheetQuery.worksheet(sheet)
-                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
-                dataQuery.columns = dataQuery.iloc[0]
-                dataQuery = dataQuery.iloc[1:]
-                dataQuery = dataQuery.reset_index()
+#                 logger_module.pyLogger('running',msg='Parsing selected sheet')
+#                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
+#                 sheetQuery = spreadSheetQuery.worksheet(sheet)
+#                 dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+#                 dataQuery.columns = dataQuery.iloc[0]
+#                 dataQuery = dataQuery.iloc[1:]
+#                 dataQuery = dataQuery.reset_index()
 
-                gsheetsWorker = GsheetsWorker.GSheetsWorker(logger_module,spreadSheetQuery,sheetQuery)
+#                 gsheetsWorker = GsheetsWorker.GSheetsWorker(logger_module,spreadSheetQuery,sheetQuery)
 
-                print('Selecting parsing functions based on the report name')
-                if sheet == "Calls":
-                    gsheetsWorker.sheetUpdaterCalls(dataQuery)
-                elif "AgentProductivity" in sheet:
-                    gsheetsWorker.sheetUpdaterAgentProductivity(dataQuery)
-                elif "AuxCodesRAW" in sheet:
-                    gsheetsWorker.sheetUpdaterAuxCodesRaw(dataQuery)
-                elif "AgentActivityRAW" in sheet:
-                    gsheetsWorker.sheetUpdaterAgentActivityRAW(dataQuery)
-                elif "LoginLogoutRAW" in sheet:
-                    gsheetsWorker.sheetUpdaterLoginLogoutRAW(dataQuery)
-                elif "CallsSummary" in sheet:
-                    gsheetsWorker.sheetUpdaterCallsSummary(dataQuery)
+#                 print('Selecting parsing functions based on the report name')
+#                 if sheet == "Calls":
+#                     gsheetsWorker.sheetUpdaterCalls(dataQuery)
+#                 elif "AgentProductivity" in sheet:
+#                     gsheetsWorker.sheetUpdaterAgentProductivity(dataQuery)
+#                 elif "AuxCodesRAW" in sheet:
+#                     gsheetsWorker.sheetUpdaterAuxCodesRaw(dataQuery)
+#                 elif "AgentActivityRAW" in sheet:
+#                     gsheetsWorker.sheetUpdaterAgentActivityRAW(dataQuery)
+#                 elif "LoginLogoutRAW" in sheet:
+#                     gsheetsWorker.sheetUpdaterLoginLogoutRAW(dataQuery)
+#                 elif "CallsSummary" in sheet:
+#                     gsheetsWorker.sheetUpdaterCallsSummary(dataQuery)
 
-            except Exception as e:
-                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
-                pass
+#             except Exception as e:
+#                 print('Error uploading data: {} . Error is: {}'.format(sheet,e))
+#                 pass
 
-    except Exception as e:
-        print('Error with GS: {} . Error is: {}'.format(e))
-        pass
+#     except Exception as e:
+#         print('Error with GS: {} . Error is: {}'.format(e))
+#         pass
 
 if __name__ == '__main__':
     try:
@@ -246,19 +246,38 @@ if __name__ == '__main__':
 
         workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy"]
         
-        lobs = {
-            "Collections" = [
-                "3102 Collections Tegucigalpa 24-7 InTouch"
-                ,"3101 Collections Tegucigalpa 24-7 InTouch Nesting"
-                ,"3100 Collections Tegucigalpa 24-7 InTouch Training"            
-            ]
-            ,"Solutions" = [
-                "1702 CS T1 Tegus"
-            ]
-        }
+        # lobs = {
+        #     "Collections" = [
+        #         "3100 Collections Tegucigalpa 24-7 InTouch Training"
+        #        ,"3101 Collections Tegucigalpa 24-7 InTouch Nesting"  
+        #        ,"3102 Collections Tegucigalpa 24-7 InTouch"              
+        #     ]
+        #     ,"Solutions" = [
+        #         "1700 CS T1 Tegus Training"
+        #        ,"1701 CS T1 Tegus Nesting"
+        #        ,"1702 CS T1 Tegus"
+        #        ,"1710 CS T2 Training"
+        #        ,"1711 CS T2 Nesting"
+        #        ,"1712 CS T2 Tegus"
+        #        ,"1713 CS T2 Tegus Legancy"
+        #        ,"1720 CS T3 Tegus training"
+        #        ,"1721 CS T3 Tegus Nesting"
+        #        ,"1722 CS T3 Tegus"
+        #     ]
+        #     ,"Retention" = [
+        #          "2400 CL EOT + ROR Tegucigalpa 24-7 InTouch Training"
+        #         ,"2401 CL EOT + ROR Tegucigalpa 24-7 InTouch Nesting"
+        #         ,"2402 CL EOT + ROR Tegucigalpa 24-7 InTouch"
+        #     ]
+        #     ,"Moves" = [
+        #          "2600 CL Moves Tegucigalpa 24-7 InTouch Training"
+        #         ,"2601 CL Moves Tegucigalpa 24-7 Intouch Nesting"
+        #         ."2602 CL Moves Tegucigalpa 24-7 InTouch"
+        #     ]
+        # }
 
-        for sheet in workbookEOD:
-            vivintEODParser(sheet,filelist,lobs)
+        # for sheet in workbookEOD:
+        #     vivintEODParser(sheet,filelist,lobs)
 
     except Exception as e:
         print('Error at main python Process: ',e)
