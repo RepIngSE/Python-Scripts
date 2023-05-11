@@ -179,14 +179,14 @@ def vivintEODParser(sheet,filelist,lobs):
                             data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
                             data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
 
-                            data["Duration"] = pd.Timedelta(pd.to_datetime(data["activity_end"].astype(str)) - pd.to_datetime(data["activity_start"].astype(str))).seconds
+                            data["Duration"] = (pd.to_datetime(data["activity_end"].astype(str)) - pd.to_datetime(data["activity_start"].astype(str))).dt.total_seconds()
 
-                            ###
+                            ### Setting up UID for data
                             dateList = data['date'].to_list()
                             agentidList = data['agent_id'].to_list()
 
                             sep = " - "
-                            uidlist = [date + sep + agent for date,agent in zip(dateList,agentidList)]
+                            uidlist = [date + sep + str(agent).replace(".0","") for date,agent in zip(dateList,agentidList)]
                             uidDF = pd.DataFrame(uidlist,columns=['uid'])
                             data = pd.concat([data.reset_index(drop=True),uidDF.reset_index(drop=True)],axis=1)
 
@@ -209,7 +209,7 @@ def vivintEODParser(sheet,filelist,lobs):
             pass
 
 def gsheetsUploader(data,spsh,sh):
-     try:
+    try:
         print('Connecting to Google services accounts with secret key')
         gc = gspread.service_account(filename=os.path.join(jsonCred,'cli-globo-d728b37c0cf6.json'))
 
@@ -235,7 +235,7 @@ def gsheetsUploader(data,spsh,sh):
                 dataQuery = dataQuery.iloc[1:]
                 dataQuery = dataQuery.reset_index()
 
-                gsheetsWorker = GsheetsWorker.GSheetsWorker(logger_module,spreadSheetQuery,sheetQuery)
+                gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
 
                 gsheetsWorker.sheetUpdaterAgentSchedules(data,dataQuery)
             
@@ -256,7 +256,6 @@ def gsheetsUploader(data,spsh,sh):
         elif "CallsSummary" in sheet:
             gsheetsWorker.sheetUpdaterCallsSummary(dataQuery)
         
-
     except Exception as e:
         print('Error with GS: {} . Error is: {}'.format(e))
         pass
