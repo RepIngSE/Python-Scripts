@@ -4,7 +4,6 @@
 ##########################################################################################################
 #Library list
 import os
-import pyodbc
 import time
 import pathlib
 from pathlib import Path
@@ -16,7 +15,6 @@ from gspread import Cell
 
 import datetime
 from datetime import datetime,timedelta
-import mysql.connector
 
 from oauth2client.service_account import ServiceAccountCredentials
 from googleapiclient import discovery
@@ -61,7 +59,6 @@ class GSheetsWorker():
             data['DAYS'] = pd.to_datetime(data['DAYS']).dt.strftime("%Y-%m-%d")
             data['SAVE_TIME'] = pd.to_datetime(data['SAVE_TIME'],format="%I:%M %p").dt.strftime("%H:%M:%S")
         
-            logger_module.pyLogger('running',msg='Inserting the dataframe values via the spreadsheet values append query')
             print('Inserting the dataframe values via the spreadsheet values append query')
             vals = data.values.tolist()
             # for val in vals:
@@ -69,7 +66,6 @@ class GSheetsWorker():
             #         val[0] = val[0].strftime("%Y-%m-%d")
 
             self.spreadSheet.values_append(self.sheet.title, {'valueInputOption': 'USER_ENTERED'},{'values':vals})
-            logger_module.pyLogger('running',msg='Succesfully inserted the values: {}'.format(len(vals)))
             print('Succesfully inserted the values: {}'.format(len(vals)))
             # * Running Update by cell function
             # logger_module.pyLogger('info',msg='Running Filter views update function')
@@ -78,187 +74,78 @@ class GSheetsWorker():
             # self.filterviewsUpdate()
         except Exception as e:
             print(e)
-            self.logger_module.pyLogger('error',msg='Error Parsing Data. Error is {}'.format(e))
             pass
     
     def get_sec(self, time_str):
         h, m, s = time_str.split(':')
         return int(h) * 3600 + int(m) * 60 + int(s)
 
-    def cellUpdater(self,celldata):
+    def sheetUpdaterAgentSchedules(self, data, dataQuery):
         try:
-            logger_module.pyLogger('info',msg='Parsing Data for Update by cell function')
-            print('Parsing Data for Update by cell function')
-            sheetdf = pd.DataFrame(self.sheet.get_all_values())
-            mu = sheetdf[2].str.find("MU")
-            muindex = mu.isin([0.0,0]).idxmax()
-            sheetdf.columns = sheetdf.iloc[muindex]
-            headers = sheetdf.iloc[muindex].values.tolist()
-            colToUpdate = headers.index('Duration')+1
-            cell_list = []
-
-            logger_module.pyLogger('running',msg='Creating cell array to update')
-            print('Creating cell array to update')
-            for celldata in celldata.itertuples():
-                cellrow = sheetdf.index[sheetdf['UID'] == celldata[1]].tolist()
-                cellrow = cellrow[0]+1
-                value = celldata[2]
-                cellToUpdate = Cell(row=cellrow,col=colToUpdate,value=value)
-                cell_list.append(cellToUpdate)
-
-            logger_module.pyLogger('running',msg='Inserting the array values via the spreadsheet values update query')
-            print('Inserting the array values via the spreadsheet values update query')
-            self.sheet.update_cells(cell_list)
-            logger_module.pyLogger('running',msg='Succesfully updated the values: {}'.format(len(cell_list)))
-            print('Succesfully updated the values: {}'.format(len(cell_list)))
-
-        except Exception as e:
-            print('Error Executing the Update by Cell function. Error is ',e)
-            self.logger_module.pyLogger('error',msg='Error Executing the Update by Cell function. Error is {}'.format(e))
-            pass
-
-    def sheetUpdaterAgentProductivity(self, dataQuery):
-        try:
-            logger_module.pyLogger('info',msg='Parsing Data for Agent State raw tracker')
+           
             print('Parsing Data for Query Tracker with calls data')
-            data = pd.read_sql_query(selectAgentProductivity.format(dateStart.strftime('%Y-%m-%d')),sqlcon)
-            data['Date'] = pd.to_datetime(data['Date']).dt.strftime("%Y-%m-%d")
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
+            data = data[['Year','Month','Weeknum','Weekday','Day','Duration','agent_id','agent_name','mu','date','shift_start','shift_end','scheduled_activity','activity_start','activity_end']]
 
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             
             # * Inserting the dataframe values via the spreadsheet values append query
-            logger_module.pyLogger('running',msg='Inserting the dataframe values via the spreadsheet values append query')
             print('Inserting the dataframe values via the spreadsheet values append query')
             dataFilter = dataFilter.replace({np.nan: None})
             vals = dataFilter.values.tolist()
 
             self.spreadSheet.values_append(self.sheet.title, {'valueInputOption': 'USER_ENTERED'},{'values':vals})
-            logger_module.pyLogger('running',msg='Succesfully inserted the values: {}'.format(len(vals)))
             print('Succesfully inserted the values: {}'.format(len(vals)))
 
         except Exception as e:
             print(e)
-            self.logger_module.pyLogger('error',msg='Error Parsing Data. Error is {}'.format(e))
             pass
-            
-    def sheetUpdaterCalls(self, dataQuery):
-        try:
-            logger_module.pyLogger('info',msg='Parsing Data for Agent State raw tracker')
-            print('Parsing Data for Query Tracker with calls data')
-            data = pd.read_sql_query(selectCalls.format(dateStart.strftime('%Y-%m-%d')),sqlcon)
-            data['start_time'] = pd.to_datetime(data['start_time']).dt.strftime("%Y-%m-%d %H:%M:%S")
-            data['Date'] = pd.to_datetime(data['Date']).dt.strftime("%Y-%m-%d")
-            data['Interval'] = pd.to_datetime(data['Interval']).dt.strftime("%H:%M:%S")
-
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
-
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
-            dataFilter = data[~data["id"].isin(dataQuery["id"])]
-            
-            # * Inserting the dataframe values via the spreadsheet values append query
-            logger_module.pyLogger('running',msg='Inserting the dataframe values via the spreadsheet values append query')
-            print('Inserting the dataframe values via the spreadsheet values append query')
-            dataFilter = dataFilter.replace({np.nan: None})
-            vals = dataFilter.values.tolist()
-
-            self.spreadSheet.values_append(self.sheet.title, {'valueInputOption': 'USER_ENTERED'},{'values':vals})
-            logger_module.pyLogger('running',msg='Succesfully inserted the values: {}'.format(len(vals)))
-            print('Succesfully inserted the values: {}'.format(len(vals)))
-
-        except Exception as e:
-            print(e)
-            self.logger_module.pyLogger('error',msg='Error Parsing Data. Error is {}'.format(e))
-            pass
-
-    def sheetUpdaterAuxCodesRaw(self, dataQuery):
-        try:
-            logger_module.pyLogger('info',msg='Parsing Data for Agent State raw tracker')
-            print('Parsing Data for Query Tracker with calls data')
-            data = pd.read_sql_query(selectAuxCodesRaw.format(dateStart.strftime('%Y-%m-%d')),sqlcon)
-            data['date'] = pd.to_datetime(data['date']).dt.strftime("%Y-%m-%d")
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
-
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
-            dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
-            
-            # * Inserting the dataframe values via the spreadsheet values append query
-            logger_module.pyLogger('running',msg='Inserting the dataframe values via the spreadsheet values append query')
-            print('Inserting the dataframe values via the spreadsheet values append query')
-            dataFilter = dataFilter.replace({np.nan: None})
-            vals = dataFilter.values.tolist()
-
-            self.spreadSheet.values_append(self.sheet.title, {'valueInputOption': 'USER_ENTERED'},{'values':vals})
-            logger_module.pyLogger('running',msg='Succesfully inserted the values: {}'.format(len(vals)))
-            print('Succesfully inserted the values: {}'.format(len(vals)))
-
-        except Exception as e:
-            print(e)
-            self.logger_module.pyLogger('error',msg='Error Parsing Data. Error is {}'.format(e))
-            pass
-
+           
     def sheetUpdaterAgentActivityRAW(self, dataQuery):
         try:
-            logger_module.pyLogger('info',msg='Parsing Data for Agent State raw tracker')
             print('Parsing Data for Query Tracker with calls data')
             data = pd.read_sql_query(selectAgentActivityRAW.format(dateStart.strftime('%Y-%m-%d')),sqlcon)
             data['start_time'] = pd.to_datetime(data['start_time']).dt.strftime("%Y-%m-%d %H:%M:%S")
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
 
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             
             # * Inserting the dataframe values via the spreadsheet values append query
-            logger_module.pyLogger('running',msg='Inserting the dataframe values via the spreadsheet values append query')
             print('Inserting the dataframe values via the spreadsheet values append query')
             dataFilter = dataFilter.replace({np.nan: None})
             vals = dataFilter.values.tolist()
 
             self.spreadSheet.values_append(self.sheet.title, {'valueInputOption': 'USER_ENTERED'},{'values':vals})
-            logger_module.pyLogger('running',msg='Succesfully inserted the values: {}'.format(len(vals)))
             print('Succesfully inserted the values: {}'.format(len(vals)))
 
         except Exception as e:
             print(e)
-            self.logger_module.pyLogger('error',msg='Error Parsing Data. Error is {}'.format(e))
             pass
 
     def sheetUpdaterLoginLogoutRAW(self, dataQuery):
         try:
-            logger_module.pyLogger('info',msg='Parsing Data for Agent State raw tracker')
             print('Parsing Data for Query Tracker with calls data')
             data = pd.read_sql_query(selectLoginLogoutRAW.format(dateStart.strftime('%Y-%m-%d')),sqlcon)
             data['date'] = pd.to_datetime(data['date']).dt.strftime("%Y-%m-%d")
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
 
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             
             # * Inserting the dataframe values via the spreadsheet values append query
-            logger_module.pyLogger('running',msg='Inserting the dataframe values via the spreadsheet values append query')
             print('Inserting the dataframe values via the spreadsheet values append query')
             dataFilter = dataFilter.replace({np.nan: None})
             vals = dataFilter.values.tolist()
 
             self.spreadSheet.values_append(self.sheet.title, {'valueInputOption': 'USER_ENTERED'},{'values':vals})
-            logger_module.pyLogger('running',msg='Succesfully inserted the values: {}'.format(len(vals)))
             print('Succesfully inserted the values: {}'.format(len(vals)))
 
         except Exception as e:
             print(e)
-            self.logger_module.pyLogger('error',msg='Error Parsing Data. Error is {}'.format(e))
             pass
 
     def sheetUpdaterCallsSummary(self, dataQuery):
         try:
-            logger_module.pyLogger('info',msg='Parsing Data for Agent State raw tracker')
             print('Parsing Data for Query Tracker with calls data')
             data = pd.read_sql_query(selectCallsSummary.format(dateStart.strftime('%Y-%m-%d')),sqlcon)
             data['Date'] = pd.to_datetime(data['Date']).dt.strftime("%Y-%m-%d")
             # data['half_hour_interval'] = pd.to_datetime(data['half_hour_interval']).dt.strftime("%H:%M:%S")
-
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
 
             agentList = data["callee_login_id"].tolist()
             actList = data["service_name"].tolist()
@@ -275,21 +162,16 @@ class GSheetsWorker():
             data['uid'] = data['uid'].str.replace("None","")
             # data.to_csv("summary.csv")
             
-
-            logger_module.pyLogger('running',msg='Creating dataframe filtered by not available values in the google sheets dataframe')
             dataFilter = data[~data["uid"].isin(dataQuery["key"])]
             
             # * Inserting the dataframe values via the spreadsheet values append query
-            logger_module.pyLogger('running',msg='Inserting the dataframe values via the spreadsheet values append query')
             print('Inserting the dataframe values via the spreadsheet values append query')
             dataFilter = dataFilter.replace({np.nan: None})
             vals = dataFilter.values.tolist()
 
             self.spreadSheet.values_append(self.sheet.title, {'valueInputOption': 'USER_ENTERED'},{'values':vals})
-            logger_module.pyLogger('running',msg='Succesfully inserted the values: {}'.format(len(vals)))
             print('Succesfully inserted the values: {}'.format(len(vals)))
 
         except Exception as e:
             print(e)
-            self.logger_module.pyLogger('error',msg='Error Parsing Data. Error is {}'.format(e))
             pass
