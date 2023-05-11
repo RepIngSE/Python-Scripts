@@ -171,7 +171,6 @@ def vivintEODParser(sheet,filelist,lobs):
                             data["activity_end"] = pd.to_datetime(data["activity_end"].astype(str)).dt.strftime('%H:%M:%S')
 
                             ## Calculated Columns Handling
-                            'Duration'
 
                             data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
                             data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
@@ -243,18 +242,6 @@ def gsheetsUploader(data,spsh,sh):
             except Exception as e:
                 print('Error uploading data: {} . Error is: {}'.format(sheet,e))
                 pass
-
-            gsheetsWorker.sheetUpdaterCalls(dataQuery)
-        elif "AgentProductivity" in sheet:
-            gsheetsWorker.sheetUpdaterAgentProductivity(dataQuery)
-        elif "AuxCodesRAW" in sheet:
-            gsheetsWorker.sheetUpdaterAuxCodesRaw(dataQuery)
-        elif "AgentActivityRAW" in sheet:
-            gsheetsWorker.sheetUpdaterAgentActivityRAW(dataQuery)
-        elif "LoginLogoutRAW" in sheet:
-            gsheetsWorker.sheetUpdaterLoginLogoutRAW(dataQuery)
-        elif "CallsSummary" in sheet:
-            gsheetsWorker.sheetUpdaterCallsSummary(dataQuery)
         
     except Exception as e:
         print('Error with GS: {} . Error is: {}'.format(e))
