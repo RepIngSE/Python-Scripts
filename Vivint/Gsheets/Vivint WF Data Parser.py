@@ -129,7 +129,7 @@ def email_downloader():
         except Exception as e:
             print('Error with email extraction: {}'.format(e))
     except Exception as e:
-        print('Error with email fuction: {}'.format(e))
+        print('Error with email extraction:{}'.format(e))
 
 ### Workbook Pandas Parser
 def vivintEODParser(sheet,filelist,lobs):
@@ -148,7 +148,6 @@ def vivintEODParser(sheet,filelist,lobs):
 
                     try:
                     
-
                         if sheet == "Agent Schedules":
 
                             ##Loading Dataframe for agent schedules
@@ -166,7 +165,6 @@ def vivintEODParser(sheet,filelist,lobs):
                             data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
                             data["shift_start"] = pd.to_datetime(data["shift_start"].astype(str)).dt.strftime('%H:%M:%S')
                             data["shift_end"] = pd.to_datetime(data["shift_end"].astype(str)).dt.strftime('%H:%M:%S')
-
                             data["activity_start"] = pd.to_datetime(data["activity_start"].astype(str)).dt.strftime('%H:%M:%S')
                             data["activity_end"] = pd.to_datetime(data["activity_end"].astype(str)).dt.strftime('%H:%M:%S')
 
@@ -176,8 +174,7 @@ def vivintEODParser(sheet,filelist,lobs):
                             data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
                             data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
                             data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
-                            data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
-
+                            data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
                             data["Duration"] = (pd.to_datetime(data["activity_end"].astype(str)) - pd.to_datetime(data["activity_start"].astype(str))).dt.total_seconds()
 
                             ### Setting up UID for data
