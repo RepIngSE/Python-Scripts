@@ -47,8 +47,8 @@ jsonCred = os.path.expandvars(jsonCred)
 
 class GSheetsWorker():
     def __init__(self,spreadSheet,sheet):
-        global logger_module
-        logger_module = logger
+        # global logger_module
+        # logger_module = logger
         self.spreadSheet = spreadSheet
         self.sheet = sheet
 
