@@ -83,7 +83,7 @@ class GSheetsWorker():
         try:
            
             print('Parsing Data for Query Tracker with calls data')
-            data = data[['Year','Month','Weeknum','Weekday','Day','Duration','agent_id','agent_name','mu','date','shift_start','shift_end','scheduled_activity','activity_start','activity_end']]
+            data = data[['Year','Month','Weeknum','Weekday','Day','Duration','agent_id','agent_name','mu','date','shift_start','shift_end','scheduled_activity','activity_start','activity_end','uid']]
 
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             

@@ -194,7 +194,7 @@ def vivintEODParser(sheet,filelist,lobs):
                         if not vals:
                             print("Empty Dataframe...")
                         else:
-                            gsheetsUploader(vals,spreadsheet,sheet)
+                            gsheetsUploader(data,spreadsheet,sheet)
 
                     except Exception as e:
                         print('Error parsing file: {} . Error is: {}'.format(f,e))
