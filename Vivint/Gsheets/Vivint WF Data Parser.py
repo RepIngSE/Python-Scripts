@@ -78,8 +78,9 @@ def email_downloader():
         mail.select('"Vivint EOD Data"')
 
         print("Searching mails...")
-        now = datetime.now() - timedelta(days=1)
-        today = datetime(now.year,now.month, now.day, 0, 0, 0)
+        now = datetime.now() - timedelta(days=0)
+        #date handling de la función de email 
+        today = datetime(now.year,now.month, now.day, 0, 0, 0) 
         today = today.strftime('%d-%b-%Y')
         searchcriteria = '(SENTSINCE "{}")'.format(today)
 
@@ -175,7 +176,7 @@ def vivintEODParser(sheet,filelist,lobs):
                             data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
                             data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
                             data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
-                            data["Duration"] = (pd.to_datetime(data["activity_end"].astype(str)) - pd.to_datetime(data["activity_start"].astype(str))).dt.total_seconds()
+                            data["Duration"] = ((pd.to_datetime(data["activity_end"].astype(str)) - pd.to_datetime(data["activity_start"].astype(str))).dt.total_seconds())/3600.0
 
                             ### Setting up UID for data
                             dateList = data['date'].to_list()
@@ -189,6 +190,154 @@ def vivintEODParser(sheet,filelist,lobs):
                             data = data.replace({np.nan: None})
                             data = data.replace({'': None})
 
+                            #elif schedules 
+                        elif sheet == "Schedules": 
+
+                            #Inicio de la hoja de cálculo 
+                            data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+
+                            #Filtro diccionario
+                            data = data[data["mu"]==lob]
+
+                            #Limpieza de datos
+                            data = data.replace({np.nan: None})
+                            cols = [c for c in data.columns if 'Unnamed' not in c]
+                            data = data[cols]
+
+                            #Campo formateado
+                            data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
+
+                            #Campos calculados
+                            data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
+                            data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
+                            data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
+                            data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
+                            data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
+                            
+                            #Uid 
+                            dateList = data['date'].to_list()
+                            agentidList = data['agent_id'].to_list()
+
+                            sep = " - "
+                            uidlist = [date + sep + str(agent).replace(".0","") for date,agent in zip(dateList,agentidList)]
+                            uidDF = pd.DataFrame(uidlist,columns=['uid'])
+                            data = pd.concat([data.reset_index(drop=True),uidDF.reset_index(drop=True)],axis=1)
+
+                            data = data.replace({np.nan: None})
+                            data = data.replace({'': None})
+
+                            #elif Adherence
+                        elif sheet == "Adherence": 
+
+                            #Inicio de la hoja de cálculo 
+                            data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+
+                            #Filtro diccionario
+                            data = data[data["mu"]==lob]
+
+                            #Limpieza de datos
+                            data = data.replace({np.nan: None})
+                            cols = [c for c in data.columns if 'Unnamed' not in c]
+                            data = data[cols]
+
+                            #Campo formateado
+                            data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
+
+                            #Campos calculados
+                            data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
+                            data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
+                            data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
+                            data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
+                            data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
+                            data['T Adh'] = pd.to_numeric(data["Percent in Adherence"])* pd.to_numeric(data ["Scheduled Time"]); 
+                            
+                            #Uid 
+                            dateList = data['date'].to_list()
+                            agentidList = data['agent_id'].to_list()
+
+                            sep = " - "
+                            uidlist = [date + sep + str(agent).replace(".0","") for date,agent in zip(dateList,agentidList)]
+                            uidDF = pd.DataFrame(uidlist,columns=['uid'])
+                            data = pd.concat([data.reset_index(drop=True),uidDF.reset_index(drop=True)],axis=1)
+
+                            data = data.replace({np.nan: None})
+                            data = data.replace({'': None})
+
+                            #elif Agent Activity 
+                        elif sheet == "Agent Activity": 
+
+                            #Inicio de la hoja de cálculo 
+                            data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+
+                            #Filtro diccionario
+                            data = data[data["mu"]==lob]
+
+                            #Limpieza de datos
+                            data = data.replace({np.nan: None})
+                            cols = [c for c in data.columns if 'Unnamed' not in c]
+                            data = data[cols]
+
+                            #Campo formateado
+                            data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
+
+                            #Campos calculados
+                            data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
+                            data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
+                            data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
+                            data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
+                            data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
+                            
+                            #Uid 
+                            dateList = data['date'].to_list()
+                            agentidList = data['agent_id'].to_list()
+
+                            sep = " - "
+                            uidlist = [date + sep + str(agent).replace(".0","") for date,agent in zip(dateList,agentidList)]
+                            uidDF = pd.DataFrame(uidlist,columns=['uid'])
+                            data = pd.concat([data.reset_index(drop=True),uidDF.reset_index(drop=True)],axis=1)
+
+                            data = data.replace({np.nan: None})
+                            data = data.replace({'': None})
+
+                            #elif occupancy
+                        elif sheet == "Occupancy": 
+
+                            #Inicio de la hoja de cálculo 
+                            data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+
+                            #Filtro diccionario
+                            data = data[data["mu"]==lob]
+
+                            #Limpieza de datos
+                            data = data.replace({np.nan: None})
+                            cols = [c for c in data.columns if 'Unnamed' not in c]
+                            data = data[cols]
+
+                            #Campo formateado
+                            data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
+
+                            #Campos calculados
+                            data['N'] = data.reset_index().index + 1
+                            data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
+                            data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
+                            data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
+                            data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
+                            data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
+                            data['OCC T'] = (pd.to_numeric(data["%Occ"])* pd.to_numeric(data ["Provided hours estimated"]))/100; 
+                            data['AHT T'] = pd.to_numeric(data["Combined AHT"])* pd.to_numeric(data ["Contacs handled"]); 
+
+                            #Uid 
+                            dateList = data['date'].to_list()
+                            agentidList = data['agent_id'].to_list()
+
+                            sep = " - "
+                            uidlist = [date + sep + str(agent).replace(".0","") for date,agent in zip(dateList,agentidList)]
+                            uidDF = pd.DataFrame(uidlist,columns=['uid'])
+                            data = pd.concat([data.reset_index(drop=True),uidDF.reset_index(drop=True)],axis=1)
+
+                            data = data.replace({np.nan: None})
+                            data = data.replace({'': None})
+                        
                         vals = list(data.itertuples(index=False, name=None))
                         spreadsheet = spreadSheets[key]
                         if not vals:
@@ -220,6 +369,7 @@ def gsheetsUploader(data,spsh,sh):
             ,"Occupancy": "Occupancy T4"
         }
 
+        #funcion Agent Schedules 
         if sh == "Agent Schedules":
             sheet = spreadsheetsSheets[sh]
             try:
@@ -234,12 +384,91 @@ def gsheetsUploader(data,spsh,sh):
                 gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
 
                 gsheetsWorker.sheetUpdaterAgentSchedules(data,dataQuery)
-            
+        
+            except Exception as e:
+                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
+                pass
 
+        #funcion Schedules 
+        elif sh == "Schedules":
+            sheet = spreadsheetsSheets[sh]
+            try:
+                print('Selecting {} '.format(sheet))
+                # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
+                sheetQuery = spreadSheetQuery.worksheet(sheet)
+                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                dataQuery.columns = dataQuery.iloc[0]
+                dataQuery = dataQuery.iloc[1:]
+                dataQuery = dataQuery.reset_index()
+
+                gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
+
+                gsheetsWorker.sheetUpdaterSchedules(data,dataQuery)
+        
+            except Exception as e:
+                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
+                pass
+
+        #funcion Adherence 
+        elif sh == "Adherence":
+            sheet = spreadsheetsSheets[sh]
+            try:
+                print('Selecting {} '.format(sheet))
+                # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
+                sheetQuery = spreadSheetQuery.worksheet(sheet)
+                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                dataQuery.columns = dataQuery.iloc[0]
+                dataQuery = dataQuery.iloc[1:]
+                dataQuery = dataQuery.reset_index()
+
+                gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
+
+                gsheetsWorker.sheetUpdaterAdherence(data,dataQuery)
+        
+            except Exception as e:
+                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
+                pass
+            
+        #funcion Agent Activity 
+        elif sh == "Agent Activity":
+            sheet = spreadsheetsSheets[sh]
+            try:
+                print('Selecting {} '.format(sheet))
+                # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
+                sheetQuery = spreadSheetQuery.worksheet(sheet)
+                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                dataQuery.columns = dataQuery.iloc[0]
+                dataQuery = dataQuery.iloc[1:]
+                dataQuery = dataQuery.reset_index()
+
+                gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
+
+                gsheetsWorker.sheetUpdaterAgentActivity(data,dataQuery)
+        
             except Exception as e:
                 print('Error uploading data: {} . Error is: {}'.format(sheet,e))
                 pass
         
+        #funcion Occupancy 
+        elif sh == "Occupancy":
+            sheet = spreadsheetsSheets[sh]
+            try:
+                print('Selecting {} '.format(sheet))
+                # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
+                sheetQuery = spreadSheetQuery.worksheet(sheet)
+                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                dataQuery.columns = dataQuery.iloc[0]
+                dataQuery = dataQuery.iloc[1:]
+                dataQuery = dataQuery.reset_index()
+
+                gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
+
+                gsheetsWorker.sheetUpdaterOccupancy(data,dataQuery)
+        
+            except Exception as e:
+                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
+                pass
+
     except Exception as e:
         print('Error with GS: {} . Error is: {}'.format(e))
         pass
@@ -247,7 +476,7 @@ def gsheetsUploader(data,spsh,sh):
 if __name__ == '__main__':
     try:
 
-        # email_downloader()
+        email_downloader()
 
         filelist = [ f for f in os.listdir(downloadDir)]
 
