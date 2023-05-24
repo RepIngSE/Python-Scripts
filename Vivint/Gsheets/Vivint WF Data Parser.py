@@ -214,6 +214,10 @@ def vivintEODParser(sheet,filelist,lobs):
                             data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
                             data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
                             
+                            #Campos calculados al final 
+                            data['IF'] = data.apply(lambda row: 0 if row['Scheduled Activity'] == "Lunch" else 1, axis=1)
+                            data['T2'] = (pd.to_numeric(data["IF"]) * pd.to_numeric(data["Length"])*24); 
+
                             #Uid 
                             dateList = data['date'].to_list()
                             agentidList = data['agent_id'].to_list()
