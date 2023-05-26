@@ -72,7 +72,7 @@ class GSheetsWorker():
         try:
            
             print('Parsing Data for Query Tracker with calls data')
-            data = data[['Year','Month','Weeknum','Weekday','Day','Date','Agent ID','Agent Name','Scheduled Activity','Length','Percent','TL','IF','T2','IF2','uid']]
+            data = data[['Year','Month','Weeknum','Weekday','Day','date','agent_id','agent_name','scheduled_activity','Activity Duration','IF','T2','uid']]
 
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             
@@ -93,7 +93,7 @@ class GSheetsWorker():
         try:
            
             print('Parsing Data for Query Tracker with calls data')
-            data = data[['Year','Month','Weeknum','Weekday','Day','T Adh','Date','Agent ID','Agent Name','Scheduled Activities','Scheduled Time','Actual Time','Min. in Adherence','Min. out Adherence','Percent in Adherence','+/- Min. in Conformance','Percent in Conformance','Percent of Total Schedule','Percent of Total Actual','TL','uid']]
+            data = data[['Year','Month','Weeknum','Weekday','Day','T Adh','date','agent_id','agent_name','scheduled_activities','scheduled_time','actual_time','min_in_adherence','min_out_adherence','percent_in_adherence','min_in_conformance','percent_in_conformance','percent_of_total_schedule','percent_of_total_actual','uid']]
 
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             
@@ -114,7 +114,7 @@ class GSheetsWorker():
         try:
            
             print('Parsing Data for Query Tracker with calls data')
-            data = data[['Year','Month','Weeknum','Weekday','Day','Date','Agent ID','Agent Name','Agent Activity','Length','Percent','uid']]
+            data = data[['Year','Month','Weeknum','Weekday','Day','date','agent_id','agent_name','aux','duration','percent','uid']]
 
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             
@@ -135,7 +135,7 @@ class GSheetsWorker():
         try:
            
             print('Parsing Data for Query Tracker with calls data')
-            data = data[['N','Year','Month','Weeknum','Weekday','Day','OCC T','AHT T','Group','Entity ID','Entity Name','Day2','Date','Contacs handled','Outbound contacs','% Occ','Original hours req','Revised hours req', 'Provided hours sched', 'Provided hours estimated', 'Actual hours req', 'Combined AHT', 'Avg talk time', 'Avg work time', 'Avg out time', 'Total work vol CSS', 'uid' ]]
+            data = data[['N','Year','Month','Weeknum','Weekday','Day','OCC T','AHT T','entity_id','entity_name','day','date','contacts_handled','outbound_contacts','occ','original_hours_req','revised_hours_req', 'provided_hours_sched', 'provided_hours_estimated', 'actual_hours_req', 'combined_aht', 'avg_talk_time', 'avg_work_time', 'avg_out_time', 'total_work_vol_ccs', 'uid' ]]
 
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             

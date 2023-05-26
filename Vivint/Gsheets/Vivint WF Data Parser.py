@@ -215,8 +215,8 @@ def vivintEODParser(sheet,filelist,lobs):
                             data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
                             
                             #Campos calculados al final 
-                            data['IF'] = data.apply(lambda row: 0 if row['Scheduled Activity'] == "Lunch" else 1, axis=1)
-                            data['T2'] = (pd.to_numeric(data["IF"]) * pd.to_numeric(data["Length"])*24); 
+                            data['IF'] = data.apply(lambda row: 0 if row['scheduled_activity'] == "Lunch" else 1, axis=1)
+                            data['T2'] = (pd.to_numeric(data["IF"]) * pd.to_numeric(data["Activity Duration"])*24); 
 
                             #Uid 
                             dateList = data['date'].to_list()
@@ -253,7 +253,7 @@ def vivintEODParser(sheet,filelist,lobs):
                             data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
                             data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
                             data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
-                            data['T Adh'] = pd.to_numeric(data["Percent in Adherence"])* pd.to_numeric(data ["Scheduled Time"]); 
+                            data['T Adh'] = pd.to_numeric(data["percent_in_adherence"])* pd.to_numeric(data ["scheduled_time"]); 
                             
                             #Uid 
                             dateList = data['date'].to_list()
@@ -308,6 +308,9 @@ def vivintEODParser(sheet,filelist,lobs):
 
                             #Inicio de la hoja de cálculo 
                             data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+                            
+                            #Crear el mu, con entity id y entity name 
+                            data['mu'] = data['entity_id'].astype(str) + " " + data['entity_name']
 
                             #Filtro diccionario
                             data = data[data["mu"]==lob]
@@ -327,12 +330,12 @@ def vivintEODParser(sheet,filelist,lobs):
                             data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
                             data['Weekday'] = pd.to_datetime(data["date"]).dt.dayofweek
                             data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
-                            data['OCC T'] = (pd.to_numeric(data["%Occ"])* pd.to_numeric(data ["Provided hours estimated"]))/100; 
-                            data['AHT T'] = pd.to_numeric(data["Combined AHT"])* pd.to_numeric(data ["Contacs handled"]); 
+                            data['OCC T'] = (pd.to_numeric(data["occ"])* pd.to_numeric(data ["provided_hours_estimated"]))/100; 
+                            data['AHT T'] = pd.to_numeric(data["combined_aht"])* pd.to_numeric(data ["contacts_handled"]); 
 
                             #Uid 
                             dateList = data['date'].to_list()
-                            agentidList = data['agent_id'].to_list()
+                            agentidList = data['entity_id'].to_list()
 
                             sep = " - "
                             uidlist = [date + sep + str(agent).replace(".0","") for date,agent in zip(dateList,agentidList)]
@@ -485,7 +488,7 @@ if __name__ == '__main__':
         filelist = [ f for f in os.listdir(downloadDir)]
 
         workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy"]
-        
+
         lobs = {
             "Collections" : [
                 "3100 Collections Tegucigalpa 24-7 InTouch Training"
