@@ -6,7 +6,8 @@ import imaplib
 import email
 import datetime as dt
 from datetime import datetime,timedelta
-
+import timeit
+import cProfile
 import pandas as pd
 import numpy as np
 import os
@@ -23,6 +24,8 @@ from tqdm import tqdm
 
 import GsheetsWorker
 import gspread
+import time
+
 #################################################################################################################################
 #Modules and DATABASE CONNECTOR
 
@@ -78,7 +81,7 @@ def email_downloader():
         mail.select('"Vivint EOD Data"')
 
         print("Searching mails...")
-        now = datetime.now() - timedelta(days=0)
+        now = datetime.now() - timedelta(days=1)
         #date handling de la función de email 
         today = datetime(now.year,now.month, now.day, 0, 0, 0) 
         today = today.strftime('%d-%b-%Y')
@@ -148,14 +151,15 @@ def vivintEODParser(sheet,filelist,lobs):
                     print("Uploading Data for {}:".format(lob))
 
                     try:
-                    
+                        excel_file = os.path.join(downloadDir,spFile)
+
                         if sheet == "Agent Schedules":
 
                             ##Loading Dataframe for agent schedules
-                            data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+                            data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
 
                             ## Data Filtering or Mask for the lob
-                            data = data[data["mu"]==lob]
+                            data = data[data["mu"].isin(lob)]
 
                             ##Cleaning up the dataframe
                             data = data.replace({np.nan: None})
@@ -194,10 +198,10 @@ def vivintEODParser(sheet,filelist,lobs):
                         elif sheet == "Schedules": 
 
                             #Inicio de la hoja de cálculo 
-                            data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+                            data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
 
                             #Filtro diccionario
-                            data = data[data["mu"]==lob]
+                            data = data[data["mu"].isin(lob)]
 
                             #Limpieza de datos
                             data = data.replace({np.nan: None})
@@ -234,10 +238,10 @@ def vivintEODParser(sheet,filelist,lobs):
                         elif sheet == "Adherence": 
 
                             #Inicio de la hoja de cálculo 
-                            data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+                            data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
 
                             #Filtro diccionario
-                            data = data[data["mu"]==lob]
+                            data = data[data["mu"].isin(lob)]
 
                             #Limpieza de datos
                             data = data.replace({np.nan: None})
@@ -271,10 +275,10 @@ def vivintEODParser(sheet,filelist,lobs):
                         elif sheet == "Agent Activity": 
 
                             #Inicio de la hoja de cálculo 
-                            data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+                            data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
 
                             #Filtro diccionario
-                            data = data[data["mu"]==lob]
+                            data = data[data["mu"].isin(lob)]
 
                             #Limpieza de datos
                             data = data.replace({np.nan: None})
@@ -307,13 +311,13 @@ def vivintEODParser(sheet,filelist,lobs):
                         elif sheet == "Occupancy": 
 
                             #Inicio de la hoja de cálculo 
-                            data = pd.read_excel(os.path.join(downloadDir,spFile), sheet_name=sheet,header=13)
+                            data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
                             
                             #Crear el mu, con entity id y entity name 
-                            data['mu'] = data['entity_id'].astype(str) + " " + data['entity_name']
+                            data['mu'] = data['entity_id'].astype(str) + " " + data['entity_name'] 
 
                             #Filtro diccionario
-                            data = data[data["mu"]==lob]
+                            data = data[data["mu"].isin(lob)]
 
                             #Limpieza de datos
                             data = data.replace({np.nan: None})
@@ -353,11 +357,11 @@ def vivintEODParser(sheet,filelist,lobs):
                             gsheetsUploader(data,spreadsheet,sheet)
 
                     except Exception as e:
-                        print('Error parsing file: {} . Error is: {}'.format(f,e))
+                        print('Error parsing file:. Error is: {}'.format(e))
                         pass
 
         except Exception as e:
-            print('Error parsing file: {} . Error is: {}'.format(f,e))
+            print('Error parsing file:. Error is: {}'.format(e))
             pass
 
 def gsheetsUploader(data,spsh,sh):
@@ -383,6 +387,7 @@ def gsheetsUploader(data,spsh,sh):
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
+                time.sleep(3)
                 dataQuery = pd.DataFrame(sheetQuery.get_all_values())
                 dataQuery.columns = dataQuery.iloc[0]
                 dataQuery = dataQuery.iloc[1:]
@@ -403,6 +408,7 @@ def gsheetsUploader(data,spsh,sh):
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
+                time.sleep(3)
                 dataQuery = pd.DataFrame(sheetQuery.get_all_values())
                 dataQuery.columns = dataQuery.iloc[0]
                 dataQuery = dataQuery.iloc[1:]
@@ -423,6 +429,7 @@ def gsheetsUploader(data,spsh,sh):
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
+                time.sleep(3)
                 dataQuery = pd.DataFrame(sheetQuery.get_all_values())
                 dataQuery.columns = dataQuery.iloc[0]
                 dataQuery = dataQuery.iloc[1:]
@@ -443,6 +450,7 @@ def gsheetsUploader(data,spsh,sh):
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
+                time.sleep(3)
                 dataQuery = pd.DataFrame(sheetQuery.get_all_values())
                 dataQuery.columns = dataQuery.iloc[0]
                 dataQuery = dataQuery.iloc[1:]
@@ -463,6 +471,7 @@ def gsheetsUploader(data,spsh,sh):
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
+                time.sleep(3)
                 dataQuery = pd.DataFrame(sheetQuery.get_all_values())
                 dataQuery.columns = dataQuery.iloc[0]
                 dataQuery = dataQuery.iloc[1:]
@@ -488,35 +497,47 @@ if __name__ == '__main__':
         filelist = [ f for f in os.listdir(downloadDir)]
 
         workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy"]
-
+        
         lobs = {
-            "Collections" : [
+            "Collections" : [[
                 "3100 Collections Tegucigalpa 24-7 InTouch Training"
+               ,"3100 Collections Tegucigalpa 24/7 InTouch Training"
                ,"3101 Collections Tegucigalpa 24-7 InTouch Nesting"  
-               ,"3102 Collections Tegucigalpa 24-7 InTouch"              
-            ]
-            ,"Solutions" : [
+               ,"3101 Collections Tegucigalpa 24/7 InTouch Nesting" 
+               ,"3102 Collections Tegucigalpa 24-7 InTouch"  
+               ,"3102 Collections Tegucigalpa 24/7 InTouch"            
+            ]]
+            ,"Solutions" : [[
                 "1700 CS T1 Tegus Training"
                ,"1701 CS T1 Tegus Nesting"
                ,"1702 CS T1 Tegus"
                ,"1710 CS T2 Training"
+               ,"1710 CS T2 Tegus Training"
                ,"1711 CS T2 Nesting"
+               ,"1711 CS T2 Tegus Nesting"
                ,"1712 CS T2 Tegus"
-               ,"1713 CS T2 Tegus Legancy"
+               ,"1713 CS T2 Tegus Legacy"
                ,"1720 CS T3 Tegus training"
+               ,"1720 CS T3 Tegus Training"
                ,"1721 CS T3 Tegus Nesting"
                ,"1722 CS T3 Tegus"
-            ]
-            ,"Retention" : [
+            ]]
+            ,"Retention" : [[
                  "2400 CL EOT + ROR Tegucigalpa 24-7 InTouch Training"
                 ,"2401 CL EOT + ROR Tegucigalpa 24-7 InTouch Nesting"
                 ,"2402 CL EOT + ROR Tegucigalpa 24-7 InTouch"
-            ]
-            ,"Moves" : [
+                ,"2400 CL EOT + ROR Tegucigalpa 24/7 InTouch Training"
+                ,"2401 CL EOT + ROR Tegucigalpa 24/7 InTouch Nesting"
+                ,"2402 CL EOT + ROR Tegucigalpa 24/7 InTouch"
+            ]]
+            ,"Moves" : [[
                  "2600 CL Moves Tegucigalpa 24-7 InTouch Training"
+                ,"2600 CL Moves Tegucigalpa 24/7 InTouch Training"
                 ,"2601 CL Moves Tegucigalpa 24-7 Intouch Nesting"
+                ,"2601 CL Moves Tegucigalpa 24/7 Intouch Nesting"
                 ,"2602 CL Moves Tegucigalpa 24-7 InTouch"
-            ]
+                ,"2602 CL Moves Tegucigalpa 24/7 InTouch"
+            ]]
         }
 
         for sheet in workbookEOD:
