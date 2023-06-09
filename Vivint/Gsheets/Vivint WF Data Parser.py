@@ -27,7 +27,7 @@ import gspread
 import time
 
 #################################################################################################################################
-#Modules and DATABASE CONNECTOR
+
 
 #CHANGE JSON DIRECTORY HERE
 if os.name == 'nt':
@@ -81,7 +81,7 @@ def email_downloader():
         mail.select('"Vivint EOD Data"')
 
         print("Searching mails...")
-        now = datetime.now() - timedelta(days=1)
+        now = datetime.now() - timedelta(days=0)
         #date handling de la función de email 
         today = datetime(now.year,now.month, now.day, 0, 0, 0) 
         today = today.strftime('%d-%b-%Y')
@@ -146,6 +146,7 @@ def vivintEODParser(sheet,filelist,lobs):
     }
     for spFile in filelist:
         try:
+
             for key, val in tqdm(lobs.items()):
                 for lob in val:
                     print("Uploading Data for {}:".format(lob))
@@ -349,88 +350,7 @@ def vivintEODParser(sheet,filelist,lobs):
 
                             data = data.replace({np.nan: None})
                             data = data.replace({'': None})
-                        
-                            #elif Agent datails - AHT_Agent_Detail_T3
-                        elif sheet == "Agent Details": 
-
-                            #Inicio de la hoja de cálculo 
-                            data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
-
-                            #Filtro diccionario
-                            data = data[data["mu"].isin(lob)]
-
-                            #Limpieza de datos
-                            data = data.replace({np.nan: None})
-                            cols = [c for c in data.columns if 'Unnamed' not in c]
-                            data = data[cols]
-
-                            #Campo formateado
-                            data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
-
-                            #Campos calculados
-                            data['Tenure'] = np.where(data['AHT_Agent_Detail_T3'] < 2, "New Hires", "Tenure")
-                            data['Months'] = ((datetime.today() + pd.DateOffset(days=1)) - data['AHT_Agent_Detail_T3'].dt.to_timestamp()) / np.timedelta64(30, 'D')
-                            data['Months'] = np.ceil(data['Months']).fillna(0).astype(int)
-                            data['Months'] = data['Months'].fillna(0)           
-                            data['T AHT'] = data['Inbound Contacts'] * data['AHT'] * 8640
-                            data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
-                            data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
-                            data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
-                            data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
                             
-                            #Uid 
-                            dateList = data['date'].to_list()
-                            agentidList = data['agent_id'].to_list()
-
-                            sep = " - "
-                            uidlist = [date + sep + str(agent).replace(".0","") for date,agent in zip(dateList,agentidList)]
-                            uidDF = pd.DataFrame(uidlist,columns=['uid'])
-                            data = pd.concat([data.reset_index(drop=True),uidDF.reset_index(drop=True)],axis=1)
-
-                            data = data.replace({np.nan: None})
-                            data = data.replace({'': None})
-
-                            #elif Agent datails - Calls per Agent T6 
-                        elif sheet == "Agent Details": 
-
-                            #Inicio de la hoja de cálculo 
-                            data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
-
-                            #Filtro diccionario
-                            data = data[data["mu"].isin(lob)]
-
-                            #Limpieza de datos
-                            data = data.replace({np.nan: None})
-                            cols = [c for c in data.columns if 'Unnamed' not in c]
-                            data = data[cols]
-
-                            #Campo formateado
-                            data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
-
-                            #Campos calculados
-                            data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
-                            data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
-                            data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
-                            data['Weekday'] = (pd.to_datetime(data["date"]).dt.dayofweek + 1) % 7 + 1
-                            data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
-                            data['One'] =  pd.to_numeric(data["Count"])/ pd.to_numeric(data ["Count"]); 
-                            data['Count'] =((data['agent_id'] == data['agent_id']) & (data['date'] == data['date'])).sum()
-                            data['T TT'] = ((data['Talk'])*60*60*24)
-                            data['T AWT'] =((data['AWT']*data['Inbound Contacs'])*86400)
-                            data['T AHT'] =((['Inbound Contacs']*data['AHT']*data)*60*60*24)
-                            
-                            #Uid 
-                            dateList = data['date'].to_list()
-                            agentidList = data['agent_id'].to_list()
-
-                            sep = " - "
-                            uidlist = [date + sep + str(agent).replace(".0","") for date,agent in zip(dateList,agentidList)]
-                            uidDF = pd.DataFrame(uidlist,columns=['uid'])
-                            data = pd.concat([data.reset_index(drop=True),uidDF.reset_index(drop=True)],axis=1)
-
-                            data = data.replace({np.nan: None})
-                            data = data.replace({'': None})
-
                         vals = list(data.itertuples(index=False, name=None))
                         spreadsheet = spreadSheets[key]
                         if not vals:
@@ -439,11 +359,11 @@ def vivintEODParser(sheet,filelist,lobs):
                             gsheetsUploader(data,spreadsheet,sheet)
 
                     except Exception as e:
-                        print('Error parsing file:. Error is: {}'.format(e))
+                        print('Error parsing file: {} . Error is: {}'.format(e))
                         pass
 
         except Exception as e:
-            print('Error parsing file:. Error is: {}'.format(e))
+            print('Error parsing file: {} . Error is: {}'.format(e))
             pass
 
 def gsheetsUploader(data,spsh,sh):
@@ -460,7 +380,7 @@ def gsheetsUploader(data,spsh,sh):
             ,"Adherence": "Adherence_T5"
             ,"Agent Activity": "Time_Ut_Act(T2)"
             ,"Occupancy": "Occupancy T4"
-            ,"Agent Details": ["AHT_Agent_Detail_T3","Calls per Agent T6"]
+
         }
         #funcion Agent Schedules 
         if sh == "Agent Schedules":
@@ -566,49 +486,7 @@ def gsheetsUploader(data,spsh,sh):
             except Exception as e:
                 print('Error uploading data: {} . Error is: {}'.format(sheet,e))
                 pass
-
-        #funcion Agent Details - AHT_Agent_Detail_T3 
-        elif sh == "Agent Details":
-            sheet = spreadsheetsSheets[sh]
-            try:
-                print('Selecting {} '.format(sheet))
-                # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
-                sheetQuery = spreadSheetQuery.worksheet(sheet)
-                time.sleep(3)
-                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
-                dataQuery.columns = dataQuery.iloc[0]
-                dataQuery = dataQuery.iloc[1:]
-                dataQuery = dataQuery.reset_index()
-
-                gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
-
-                gsheetsWorker.sheetUpdaterAgentDatailsAHT_Agent__Detail_T3(data,dataQuery)
-        
-            except Exception as e:
-                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
-                pass
-
-        #funcion Agent Details - AHT_Agent_Detail_T3 
-        elif sh == "Agent Details":
-            sheet = spreadsheetsSheets[sh]
-            try:
-                print('Selecting {} '.format(sheet))
-                # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
-                sheetQuery = spreadSheetQuery.worksheet(sheet)
-                time.sleep(3)
-                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
-                dataQuery.columns = dataQuery.iloc[0]
-                dataQuery = dataQuery.iloc[1:]
-                dataQuery = dataQuery.reset_index()
-
-                gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
-
-                gsheetsWorker.sheetUpdaterAgentDatails_Calls_per_Agent_T6(data,dataQuery)
-        
-            except Exception as e:
-                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
-                pass
-
+            
     except Exception as e:
         print('Error with GS: {} . Error is: {}'.format(e))
         pass
@@ -621,7 +499,16 @@ if __name__ == '__main__':
         filelist = [ f for f in os.listdir(downloadDir)]
 
         workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy","Agent Details"]
+        #workbookEOD = ["Agent Details"]
 
+        spreadsheetsSheets = {
+            "Agent Schedules": "New_Agent_schedules"
+            ,"Schedules": "Time_Ut_Scheduled_(T1)"
+            ,"Adherence": "Adherence_T5"
+            ,"Agent Activity": "Time_Ut_Act(T2)"
+            ,"Occupancy": "Occupancy T4"
+            ,"Agent Details": ["AHT_Agent_Detail_T3","Calls per Agent T6"]
+        }
         lobs = {
             "Collections" : [[
                 "3100 Collections Tegucigalpa 24-7 InTouch Training"

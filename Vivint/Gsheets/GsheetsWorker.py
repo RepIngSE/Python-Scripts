@@ -130,7 +130,7 @@ class GSheetsWorker():
             print(e)
             pass 
     
-    # funcion Occupancy
+    # funcion Agent Occupancy
     def sheetUpdaterOccupancy(self, data, dataQuery):
         try:
            
@@ -150,13 +150,13 @@ class GSheetsWorker():
         except Exception as e:
             print(e)
             pass 
-    
+        
     # funcion Agent Details-AHT_Agent__Detail_T3
     def sheetUpdaterAgentDatailsAHT_Agent__Detail_T3(self, data, dataQuery):
         try:
            
             print('Parsing Data for Query Tracker with calls data')
-            data = data[['Ternure','Months','T AHT','Year','Month','Weeknum','Day','day','date','agent_id','agent_name','inbound_contacts','talk','work','total', 'att', 'awt', 'aht', 'outbound_contacts', 'outbound_time', 'system-time', 'uid' ]]
+            data = data[['T AHT','Year','Month','Weeknum','Day','day','date','agent_id','agent_name','inbound_contacts','talk','work','total', 'att', 'awt', 'aht', 'outbound_contacts', 'outbound_time', 'system-time', 'uid' ]]
 
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             
