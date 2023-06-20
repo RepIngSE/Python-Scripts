@@ -14,7 +14,6 @@ import os
 import datetime as dt
 import shutil
 import re
-
 import pathlib
 from pathlib import Path
 
@@ -81,7 +80,7 @@ def email_downloader():
         mail.select('"Vivint EOD Data"')
 
         print("Searching mails...")
-        now = datetime.now() - timedelta(days=0)
+        now = datetime.now() - timedelta(days=1)
         #date handling de la función de email 
         today = datetime(now.year,now.month, now.day, 0, 0, 0) 
         today = today.strftime('%d-%b-%Y')
@@ -136,7 +135,7 @@ def email_downloader():
         print('Error with email extraction:{}'.format(e))
 
 ### Workbook Pandas Parser
-def vivintEODParser(sheet,filelist,lobs):
+def vivintEODParser(sheet, filelist, lobs, spreadsheetsSheets):
     # * Parsing all Downloaded Attachments to a dataframe
     spreadSheets = {
         'Collections' : '1q_BLGm27Ei45FnHJMc8ArVUwY_J8sUkTGvg8IxiwEBE'
@@ -155,7 +154,48 @@ def vivintEODParser(sheet,filelist,lobs):
                         
                         excel_file = os.path.join(downloadDir,spFile)
 
-                        if sheet == "Agent Schedules":
+                        if sheet == "Agent Details": 
+
+                            #Inicio de la hoja de cálculo 
+                            data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
+
+                            #Filtro diccionario
+                            data = data[data["mu"].isin(lob)]
+
+                            #Limpieza de datos
+                            data = data.replace({np.nan: None})
+                            cols = [c for c in data.columns if 'Unnamed' not in c]
+                            data = data[cols]
+
+                            #Campo formateado
+                            data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
+                            data["talk"] = pd.to_datetime(data["talk"].astype(str)).dt.strftime('%H:%M:%S')
+                            data["work"] = pd.to_datetime(data["work"].astype(str)).dt.strftime('%H:%M:%S')
+                            data["total"] = pd.to_datetime(data["total"].astype(str)).dt.strftime('%H:%M:%S')
+                            data["att"] = pd.to_datetime(data["att"].astype(str)).dt.strftime('%H:%M:%S')
+                            data["awt"] = pd.to_datetime(data["awt"].astype(str)).dt.strftime('%H:%M:%S')
+                            data["aht"] = pd.to_datetime(data["aht"].astype(str)).dt.strftime('%H:%M:%S')
+
+                            #Campos calculados
+                            data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
+                            data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
+                            data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
+                            data['Weekday'] = (pd.to_datetime(data["date"]).dt.dayofweek + 1) % 7 + 1
+                            data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
+                                                
+                            #Uid 
+                            dateList = data['date'].to_list()
+                            agentidList = data['agent_id'].to_list()
+
+                            sep = " - "
+                            uidlist = [date + sep + str(agent).replace(".0","") for date,agent in zip(dateList,agentidList)]
+                            uidDF = pd.DataFrame(uidlist,columns=['uid'])
+                            data = pd.concat([data.reset_index(drop=True),uidDF.reset_index(drop=True)],axis=1)
+
+                            data = data.replace({np.nan: None})
+                            data = data.replace({'': None})
+
+                        elif sheet == "Agent Schedules":
 
                             ##Loading Dataframe for agent schedules
                             data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
@@ -176,7 +216,6 @@ def vivintEODParser(sheet,filelist,lobs):
                             data["activity_end"] = pd.to_datetime(data["activity_end"].astype(str)).dt.strftime('%H:%M:%S')
 
                             ## Calculated Columns Handling
-
                             data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
                             data["Month"] = pd.to_datetime(data["date"]).dt.strftime('%m')
                             data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
@@ -196,7 +235,7 @@ def vivintEODParser(sheet,filelist,lobs):
                             data = data.replace({np.nan: None})
                             data = data.replace({'': None})
 
-                            #elif schedules 
+                        #elif schedules 
                         elif sheet == "Schedules": 
 
                             #Inicio de la hoja de cálculo 
@@ -236,7 +275,7 @@ def vivintEODParser(sheet,filelist,lobs):
                             data = data.replace({np.nan: None})
                             data = data.replace({'': None})
 
-                            #elif Adherence
+                        #elif Adherence
                         elif sheet == "Adherence": 
 
                             #Inicio de la hoja de cálculo 
@@ -260,7 +299,7 @@ def vivintEODParser(sheet,filelist,lobs):
                             data['Weekday'] = (pd.to_datetime(data["date"]).dt.dayofweek + 1) % 7 + 1
                             data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
                             data['T Adh'] = pd.to_numeric(data["percent_in_adherence"])* pd.to_numeric(data ["scheduled_time"]); 
-                            
+                                
                             #Uid 
                             dateList = data['date'].to_list()
                             agentidList = data['agent_id'].to_list()
@@ -273,7 +312,7 @@ def vivintEODParser(sheet,filelist,lobs):
                             data = data.replace({np.nan: None})
                             data = data.replace({'': None})
 
-                            #elif Agent Activity 
+                        #elif Agent Activity 
                         elif sheet == "Agent Activity": 
 
                             #Inicio de la hoja de cálculo 
@@ -296,7 +335,7 @@ def vivintEODParser(sheet,filelist,lobs):
                             data['Weeknum'] = pd.to_datetime(data["date"]).dt.isocalendar().week
                             data['Weekday'] = (pd.to_datetime(data["date"]).dt.dayofweek + 1) % 7 + 1
                             data["Day"] = pd.to_datetime(data["date"]).dt.strftime('%d')
-                            
+                                
                             #Uid 
                             dateList = data['date'].to_list()
                             agentidList = data['agent_id'].to_list()
@@ -309,12 +348,12 @@ def vivintEODParser(sheet,filelist,lobs):
                             data = data.replace({np.nan: None})
                             data = data.replace({'': None})
 
-                            #elif occupancy
+                        #elif occupancy
                         elif sheet == "Occupancy": 
 
                             #Inicio de la hoja de cálculo 
                             data = pd.read_excel(excel_file, sheet_name=sheet,header=13)
-                            
+                                
                             #Crear el mu, con entity id y entity name 
                             data['mu'] = data['entity_id'].astype(str) + " " + data['entity_name'] 
 
@@ -350,11 +389,11 @@ def vivintEODParser(sheet,filelist,lobs):
 
                             data = data.replace({np.nan: None})
                             data = data.replace({'': None})
-                            
+
                         vals = list(data.itertuples(index=False, name=None))
                         spreadsheet = spreadSheets[key]
                         if not vals:
-                            print("Empty Dataframe...")
+                                print("Empty Dataframe...")
                         else:
                             gsheetsUploader(data,spreadsheet,sheet)
 
@@ -374,14 +413,6 @@ def gsheetsUploader(data,spsh,sh):
         print('Opening Vivint REPORT RAW Spreadsheet')
         spreadSheetQuery = gc.open_by_key(spsh)
 
-        spreadsheetsSheets = {
-            "Agent Schedules": "New_Agent_schedules"
-            ,"Schedules": "Time_Ut_Scheduled_(T1)"
-            ,"Adherence": "Adherence_T5"
-            ,"Agent Activity": "Time_Ut_Act(T2)"
-            ,"Occupancy": "Occupancy T4"
-
-        }
         #funcion Agent Schedules 
         if sh == "Agent Schedules":
             sheet = spreadsheetsSheets[sh]
@@ -486,6 +517,27 @@ def gsheetsUploader(data,spsh,sh):
             except Exception as e:
                 print('Error uploading data: {} . Error is: {}'.format(sheet,e))
                 pass
+
+        elif sh == "Agent Details":
+            sheet = spreadsheetsSheets[sh]
+            for elemento in sheet:
+                try:
+                    print('Selecting {} '.format(elemento))
+                    # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
+                    sheetQuery = spreadSheetQuery.worksheet(elemento)
+                    time.sleep(3)
+                    dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                    dataQuery.columns = dataQuery.iloc[0]
+                    dataQuery = dataQuery.iloc[1:]
+                    dataQuery = dataQuery.reset_index()
+
+                    gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
+
+                    gsheetsWorker.sheetUpdaterAgentDatails(data, dataQuery)
+            
+                except Exception as e:
+                    print('Error uploading data: {} . Error is: {}'.format(elemento,e))
+                    pass
             
     except Exception as e:
         print('Error with GS: {} . Error is: {}'.format(e))
@@ -499,7 +551,6 @@ if __name__ == '__main__':
         filelist = [ f for f in os.listdir(downloadDir)]
 
         workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy","Agent Details"]
-        #workbookEOD = ["Agent Details"]
 
         spreadsheetsSheets = {
             "Agent Schedules": "New_Agent_schedules"
@@ -507,8 +558,9 @@ if __name__ == '__main__':
             ,"Adherence": "Adherence_T5"
             ,"Agent Activity": "Time_Ut_Act(T2)"
             ,"Occupancy": "Occupancy T4"
-            ,"Agent Details": ["AHT_Agent_Detail_T3","Calls per Agent T6"]
+            ,"Agent Details": ["AHT_Agent_Detail_T3", "Calls per Agent T6"]
         }
+
         lobs = {
             "Collections" : [[
                 "3100 Collections Tegucigalpa 24-7 InTouch Training"
@@ -552,7 +604,7 @@ if __name__ == '__main__':
         }
 
         for sheet in workbookEOD:
-            vivintEODParser(sheet,filelist,lobs)
+            vivintEODParser(sheet,filelist,lobs,spreadsheetsSheets)
 
     except Exception as e:
         print('Error at main python Process: ',e)

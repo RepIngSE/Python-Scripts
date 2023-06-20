@@ -152,32 +152,11 @@ class GSheetsWorker():
             pass 
         
     # funcion Agent Details-AHT_Agent__Detail_T3
-    def sheetUpdaterAgentDatailsAHT_Agent__Detail_T3(self, data, dataQuery):
+    def sheetUpdaterAgentDatails(self, data, dataQuery):
         try:
            
             print('Parsing Data for Query Tracker with calls data')
-            data = data[['T AHT','Year','Month','Weeknum','Day','day','date','agent_id','agent_name','inbound_contacts','talk','work','total', 'att', 'awt', 'aht', 'outbound_contacts', 'outbound_time', 'system-time', 'uid' ]]
-
-            dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
-            
-            # * Inserting the dataframe values via the spreadsheet values append query
-            print('Inserting the dataframe values via the spreadsheet values append query')
-            dataFilter = dataFilter.replace({np.nan: None})
-            vals = dataFilter.values.tolist()
-
-            self.spreadSheet.values_append(self.sheet.title, {'valueInputOption': 'USER_ENTERED'},{'values':vals})
-            print('Succesfully inserted the values: {}'.format(len(vals)))
-
-        except Exception as e:
-            print(e)
-            pass 
-    
-    # funcion Agent Details-Calls per Agent T6
-    def sheetUpdaterAgentDatails_Calls_per_Agent_T6(self, data, dataQuery):
-        try:
-           
-            print('Parsing Data for Query Tracker with calls data')
-            data = data[['Year','Month','Weeknum','Weekday','Day','One','Count','T TT','T AWT','T AHT','Day','day','date','agent_id','agent_name','inbound_contacts','talk','work','total', 'att', 'awt', 'aht', 'outbound_contacts', 'outbound_time', 'system-time', 'uid' ]]
+            data = data[['Year','Month','Weeknum','Weekday','Day','day','date','agent_id','agent_name','inbound_contacts','talk','work','total', 'att', 'awt', 'aht', 'outbound_contacts', 'outbound_time', 'system_time', 'uid' ]]
 
             dataFilter = data[~data["uid"].isin(dataQuery["uid"])]
             
