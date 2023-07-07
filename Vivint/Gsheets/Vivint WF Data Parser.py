@@ -16,7 +16,8 @@ import shutil
 import re
 import pathlib
 from pathlib import Path
-
+import datetime as datetime_module
+import warnings
 import importlib.util
 drive = Path(__file__).drive
 from tqdm import tqdm
@@ -24,6 +25,11 @@ from tqdm import tqdm
 import GsheetsWorker
 import gspread
 import time
+
+warnings.simplefilter('ignore')
+warnings.filterwarnings('ignore')
+warnings.simplefilter("ignore", UserWarning)
+warnings.simplefilter("ignore", DeprecationWarning)
 
 #################################################################################################################################
 
@@ -80,7 +86,7 @@ def email_downloader():
         mail.select('"Vivint EOD Data"')
 
         print("Searching mails...")
-        now = datetime.now() - timedelta(days=2)
+        now = datetime.now() - timedelta(days=0)
         #date handling de la función de email 
         today = datetime(now.year,now.month, now.day, 0, 0, 0) 
         today = today.strftime('%d-%b-%Y')
@@ -167,6 +173,7 @@ def vivintEODParser(sheet, filelist, lobs, spreadsheetsSheets):
                             cols = [c for c in data.columns if 'Unnamed' not in c]
                             data = data[cols]
 
+                            data = data.sort_values(by ="date", ascending = True)  # Ordenar por fecha
                             #Campo formateado
                             data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
                             data["talk"] = pd.to_datetime(data["talk"].astype(str)).dt.strftime('%H:%M:%S')
@@ -208,6 +215,7 @@ def vivintEODParser(sheet, filelist, lobs, spreadsheetsSheets):
                             cols = [c for c in data.columns if 'Unnamed' not in c]
                             data = data[cols]
 
+                            data = data.sort_values(by ="date", ascending = True)  # Ordenar por fecha
                             ### Formatting DAtes for JSON upload to Gsheets
                             data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
                             data["shift_start"] = pd.to_datetime(data["shift_start"].astype(str)).dt.strftime('%H:%M:%S')
@@ -249,8 +257,8 @@ def vivintEODParser(sheet, filelist, lobs, spreadsheetsSheets):
                             cols = [c for c in data.columns if 'Unnamed' not in c]
                             data = data[cols]
 
-                            #Campo formateado
-                            data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
+                            data = data.sort_values(by ="date", ascending = True)  # Ordenar por fecha
+                            data["date"] = data["date"].dt.strftime('%Y-%m-%d')  # Formatear las fechas en el formato deseado
 
                             #Campos calculados
                             data['Year'] = pd.to_datetime(data["date"]).dt.strftime('%Y')
@@ -289,6 +297,7 @@ def vivintEODParser(sheet, filelist, lobs, spreadsheetsSheets):
                             cols = [c for c in data.columns if 'Unnamed' not in c]
                             data = data[cols]
 
+                            data = data.sort_values(by ="date", ascending = True)  # Ordenar por fecha
                             #Campo formateado
                             data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
 
@@ -325,7 +334,8 @@ def vivintEODParser(sheet, filelist, lobs, spreadsheetsSheets):
                             data = data.replace({np.nan: None})
                             cols = [c for c in data.columns if 'Unnamed' not in c]
                             data = data[cols]
-
+                            
+                            data = data.sort_values(by ="date", ascending = True)  # Ordenar por fecha
                             #Campo formateado
                             data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
 
@@ -364,7 +374,8 @@ def vivintEODParser(sheet, filelist, lobs, spreadsheetsSheets):
                             data = data.replace({np.nan: None})
                             cols = [c for c in data.columns if 'Unnamed' not in c]
                             data = data[cols]
-
+                            
+                            data = data.sort_values(by ="date", ascending = True)  # Ordenar por fecha
                             #Campo formateado
                             data["date"] = pd.to_datetime(data["date"]).dt.strftime('%Y-%m-%d')
 
@@ -417,6 +428,7 @@ def gsheetsUploader(data,spsh,sh):
         if sh == "Agent Schedules":
             sheet = spreadsheetsSheets[sh]
             try:
+
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
@@ -438,6 +450,7 @@ def gsheetsUploader(data,spsh,sh):
         elif sh == "Schedules":
             sheet = spreadsheetsSheets[sh]
             try:
+
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
@@ -449,7 +462,28 @@ def gsheetsUploader(data,spsh,sh):
 
                 gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
 
-                gsheetsWorker.sheetUpdaterSchedules(data,dataQuery)
+                fecha_actual = datetime.now().date()
+                fecha_hace_7_dias = fecha_actual - timedelta(days=7)
+                #data["date"] = pd.to_datetime(data["date"]).dt.date
+                dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.date
+                dataQueryFiltrado = None
+                row_indices = None
+                indice_minimo = -1
+                indice_maximo = -1
+
+                if len (dataQuery)>1:
+                    dataQueryFiltrado = dataQuery[(dataQuery["date"] >= fecha_hace_7_dias) & (dataQuery["date"] <= fecha_actual)]
+                    #dataFiltrado = data[(data["date"] >= fecha_hace_7_dias) & (data["date"] <= fecha_actual)]
+                    row_indices = dataQueryFiltrado.index.tolist()
+
+                    if len (row_indices) > 1: 
+                        indice_minimo = min(row_indices) +2 
+                        indice_maximo = max(row_indices) +2
+
+                print("Índice mínimo:", indice_minimo)
+                print("Índice máximo:", indice_maximo)
+                dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.strftime('%Y-%m-%d')
+                gsheetsWorker.sheetUpdaterSchedules(data, dataQuery, indice_minimo, indice_maximo)
         
             except Exception as e:
                 print('Error uploading data: {} . Error is: {}'.format(sheet,e))
@@ -471,7 +505,7 @@ def gsheetsUploader(data,spsh,sh):
                 gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
 
                 gsheetsWorker.sheetUpdaterAdherence(data,dataQuery)
-        
+
             except Exception as e:
                 print('Error uploading data: {} . Error is: {}'.format(sheet,e))
                 pass
@@ -480,6 +514,7 @@ def gsheetsUploader(data,spsh,sh):
         elif sh == "Agent Activity":
             sheet = spreadsheetsSheets[sh]
             try:
+
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
@@ -501,6 +536,7 @@ def gsheetsUploader(data,spsh,sh):
         elif sh == "Occupancy":
             sheet = spreadsheetsSheets[sh]
             try:
+                #updateSheet(sheet,12,spreadSheetQuery)
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
@@ -517,11 +553,12 @@ def gsheetsUploader(data,spsh,sh):
             except Exception as e:
                 print('Error uploading data: {} . Error is: {}'.format(sheet,e))
                 pass
-
+            
         elif sh == "Agent Details":
             sheet = spreadsheetsSheets[sh]
             for elemento in sheet:
                 try:
+
                     print('Selecting {} '.format(elemento))
                     # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                     sheetQuery = spreadSheetQuery.worksheet(elemento)
@@ -531,9 +568,29 @@ def gsheetsUploader(data,spsh,sh):
                     dataQuery = dataQuery.iloc[1:]
                     dataQuery = dataQuery.reset_index()
 
-                    gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
+                    gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery, sheet)
 
-                    gsheetsWorker.sheetUpdaterAgentDatails(data, dataQuery)
+                    fecha_actual = datetime.now().date()
+                    fecha_hace_7_dias = fecha_actual - timedelta(days=7)
+                    #data["date"] = pd.to_datetime(data["date"]).dt.date
+                    dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.date
+                    dataQueryFiltrado = None
+                    row_indices = None
+                    indice_minimo = -1
+                    indice_maximo = -1
+
+                    if len (dataQuery)>1:
+                        dataQueryFiltrado = dataQuery[(dataQuery["date"] >= fecha_hace_7_dias) & (dataQuery["date"] <= fecha_actual)]
+                        #dataFiltrado = data[(data["date"] >= fecha_hace_7_dias) & (data["date"] <= fecha_actual)]
+                        row_indices = dataQueryFiltrado.index.tolist()
+
+                        indice_minimo = min(row_indices) +2 
+                        indice_maximo = max(row_indices) +2
+
+                    print("Índice mínimo:", indice_minimo)
+                    print("Índice máximo:", indice_maximo)
+
+                    gsheetsWorker.sheetUpdaterAgentDatails(data, dataQuery, indice_minimo, indice_maximo)
             
                 except Exception as e:
                     print('Error uploading data: {} . Error is: {}'.format(elemento,e))
@@ -550,7 +607,8 @@ if __name__ == '__main__':
 
         filelist = [ f for f in os.listdir(downloadDir)]
 
-        workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy","Agent Details"]
+        #workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy","Agent Details"]
+        workbookEOD = ["Schedules"]
 
         spreadsheetsSheets = {
             "Agent Schedules": "New_Agent_schedules"
@@ -597,6 +655,8 @@ if __name__ == '__main__':
                  "2600 CL Moves Tegucigalpa 24-7 InTouch Training"
                 ,"2600 CL Moves Tegucigalpa 24/7 InTouch Training"
                 ,"2601 CL Moves Tegucigalpa 24-7 Intouch Nesting"
+                ,"2601 CL Moves Tegucigalpa 24-7 InTouch Nesting"
+                ,"2601 CL Moves Tegucigalpa 24/7 InTouch Nesting"
                 ,"2601 CL Moves Tegucigalpa 24/7 Intouch Nesting"
                 ,"2602 CL Moves Tegucigalpa 24-7 InTouch"
                 ,"2602 CL Moves Tegucigalpa 24/7 InTouch"
