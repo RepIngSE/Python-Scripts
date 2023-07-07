@@ -80,7 +80,7 @@ def email_downloader():
         mail.select('"Vivint EOD Data"')
 
         print("Searching mails...")
-        now = datetime.now() - timedelta(days=1)
+        now = datetime.now() - timedelta(days=2)
         #date handling de la función de email 
         today = datetime(now.year,now.month, now.day, 0, 0, 0) 
         today = today.strftime('%d-%b-%Y')
