@@ -75,7 +75,7 @@ def email_downloader():
         # * Get Email Attachments Code Block
         #Email User Data:
         email_user = 'sara.cruz02@24-7intouch.com'
-        email_pass = 'ljphfkazgebxdskd'
+        email_pass = 'fsquwnzohfddckwf'
         host = 'imap.gmail.com'
         port= '993'
 
@@ -440,13 +440,40 @@ def gsheetsUploader(data,spsh,sh):
 
                 gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
 
-                gsheetsWorker.sheetUpdaterAgentSchedules(data,dataQuery)
-        
-            except Exception as e:
-                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
-                pass
+                fecha_actual = datetime.now().date()
+                fecha_hace_7_dias = fecha_actual - timedelta(days=7)
+                #data["date"] = pd.to_datetime(data["date"]).dt.date
+                dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.date
+                dataQueryFiltrado = None
+                row_indices = None
+                indice_minimo = -1
+                indice_maximo = -1
 
-        #funcion Schedules 
+                if len (dataQuery)>1:
+                    dataQueryFiltrado = dataQuery[(dataQuery["date"] >= fecha_hace_7_dias) & (dataQuery["date"] <= fecha_actual)]
+                    #dataFiltrado = data[(data["date"] >= fecha_hace_7_dias) & (data["date"] <= fecha_actual)]
+                    row_indices = dataQueryFiltrado.index.tolist()
+
+                    if len (row_indices) > 1: 
+                        indice_minimo = min(row_indices) +2 
+                        indice_maximo = max(row_indices) +2
+
+                        print("Índice mínimo:", indice_minimo)
+                        print("Índice máximo:", indice_maximo)
+                        dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.strftime('%Y-%m-%d')
+                        gsheetsWorker.delete_rows(indice_minimo, indice_maximo)
+
+                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                dataQuery.columns = dataQuery.iloc[0]
+                dataQuery = dataQuery.iloc[1:]
+                dataQuery = dataQuery.reset_index()
+
+                gsheetsWorker.sheetUpdaterAgentSchedules(data, dataQuery)
+                
+            except Exception as e:
+                print('Error uploading data: {}. El error es: {}'.format(sheet, e))
+                pass
+            
         elif sh == "Schedules":
             sheet = spreadsheetsSheets[sh]
             try:
@@ -480,19 +507,26 @@ def gsheetsUploader(data,spsh,sh):
                         indice_minimo = min(row_indices) +2 
                         indice_maximo = max(row_indices) +2
 
-                print("Índice mínimo:", indice_minimo)
-                print("Índice máximo:", indice_maximo)
-                dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.strftime('%Y-%m-%d')
-                gsheetsWorker.sheetUpdaterSchedules(data, dataQuery, indice_minimo, indice_maximo)
-        
-            except Exception as e:
-                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
-                pass
+                        print("Índice mínimo:", indice_minimo)
+                        print("Índice máximo:", indice_maximo)
+                        dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.strftime('%Y-%m-%d')
+                        gsheetsWorker.delete_rows(indice_minimo, indice_maximo)
 
-        #funcion Adherence 
+                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                dataQuery.columns = dataQuery.iloc[0]
+                dataQuery = dataQuery.iloc[1:]
+                dataQuery = dataQuery.reset_index()
+
+                gsheetsWorker.sheetUpdaterSchedules(data, dataQuery)
+                
+            except Exception as e:
+                print('Error uploading data: {}. El error es: {}'.format(sheet, e))
+                pass
+            
         elif sh == "Adherence":
             sheet = spreadsheetsSheets[sh]
             try:
+
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
@@ -504,12 +538,40 @@ def gsheetsUploader(data,spsh,sh):
 
                 gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
 
-                gsheetsWorker.sheetUpdaterAdherence(data,dataQuery)
+                fecha_actual = datetime.now().date()
+                fecha_hace_7_dias = fecha_actual - timedelta(days=7)
+                #data["date"] = pd.to_datetime(data["date"]).dt.date
+                dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.date
+                dataQueryFiltrado = None
+                row_indices = None
+                indice_minimo = -1
+                indice_maximo = -1
 
+                if len (dataQuery)>1:
+                    dataQueryFiltrado = dataQuery[(dataQuery["date"] >= fecha_hace_7_dias) & (dataQuery["date"] <= fecha_actual)]
+                    #dataFiltrado = data[(data["date"] >= fecha_hace_7_dias) & (data["date"] <= fecha_actual)]
+                    row_indices = dataQueryFiltrado.index.tolist()
+
+                    if len (row_indices) > 1: 
+                        indice_minimo = min(row_indices) +2 
+                        indice_maximo = max(row_indices) +2
+
+                        print("Índice mínimo:", indice_minimo)
+                        print("Índice máximo:", indice_maximo)
+                        dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.strftime('%Y-%m-%d')
+                        gsheetsWorker.delete_rows(indice_minimo, indice_maximo)
+
+                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                dataQuery.columns = dataQuery.iloc[0]
+                dataQuery = dataQuery.iloc[1:]
+                dataQuery = dataQuery.reset_index()
+
+                gsheetsWorker.sheetUpdaterAdherence(data, dataQuery)
+                
             except Exception as e:
-                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
+                print('Error uploading data: {}. El error es: {}'.format(sheet, e))
                 pass
-            
+
         #funcion Agent Activity 
         elif sh == "Agent Activity":
             sheet = spreadsheetsSheets[sh]
@@ -526,17 +588,45 @@ def gsheetsUploader(data,spsh,sh):
 
                 gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
 
-                gsheetsWorker.sheetUpdaterAgentActivity(data,dataQuery)
-        
+                fecha_actual = datetime.now().date()
+                fecha_hace_7_dias = fecha_actual - timedelta(days=7)
+                #data["date"] = pd.to_datetime(data["date"]).dt.date
+                dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.date
+                dataQueryFiltrado = None
+                row_indices = None
+                indice_minimo = -1
+                indice_maximo = -1
+
+                if len (dataQuery)>1:
+                    dataQueryFiltrado = dataQuery[(dataQuery["date"] >= fecha_hace_7_dias) & (dataQuery["date"] <= fecha_actual)]
+                    #dataFiltrado = data[(data["date"] >= fecha_hace_7_dias) & (data["date"] <= fecha_actual)]
+                    row_indices = dataQueryFiltrado.index.tolist()
+
+                    if len (row_indices) > 1: 
+                        indice_minimo = min(row_indices) +2 
+                        indice_maximo = max(row_indices) +2
+
+                        print("Índice mínimo:", indice_minimo)
+                        print("Índice máximo:", indice_maximo)
+                        dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.strftime('%Y-%m-%d')
+                        gsheetsWorker.delete_rows(indice_minimo, indice_maximo)
+
+                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                dataQuery.columns = dataQuery.iloc[0]
+                dataQuery = dataQuery.iloc[1:]
+                dataQuery = dataQuery.reset_index()
+
+                gsheetsWorker.sheetUpdaterAgentActivity(data, dataQuery)
+                
             except Exception as e:
-                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
+                print('Error uploading data: {}. El error es: {}'.format(sheet, e))
                 pass
         
         #funcion Occupancy 
         elif sh == "Occupancy":
             sheet = spreadsheetsSheets[sh]
             try:
-                #updateSheet(sheet,12,spreadSheetQuery)
+
                 print('Selecting {} '.format(sheet))
                 # spreadSheetQuery.values_clear("{}!A2:U".format(sheet))
                 sheetQuery = spreadSheetQuery.worksheet(sheet)
@@ -548,10 +638,38 @@ def gsheetsUploader(data,spsh,sh):
 
                 gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
 
-                gsheetsWorker.sheetUpdaterOccupancy(data,dataQuery)
-        
+                fecha_actual = datetime.now().date()
+                fecha_hace_7_dias = fecha_actual - timedelta(days=7)
+                #data["date"] = pd.to_datetime(data["date"]).dt.date
+                dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.date
+                dataQueryFiltrado = None
+                row_indices = None
+                indice_minimo = -1
+                indice_maximo = -1
+
+                if len (dataQuery)>1:
+                    dataQueryFiltrado = dataQuery[(dataQuery["date"] >= fecha_hace_7_dias) & (dataQuery["date"] <= fecha_actual)]
+                    #dataFiltrado = data[(data["date"] >= fecha_hace_7_dias) & (data["date"] <= fecha_actual)]
+                    row_indices = dataQueryFiltrado.index.tolist()
+
+                    if len (row_indices) > 1: 
+                        indice_minimo = min(row_indices) +2 
+                        indice_maximo = max(row_indices) +2
+
+                        print("Índice mínimo:", indice_minimo)
+                        print("Índice máximo:", indice_maximo)
+                        dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.strftime('%Y-%m-%d')
+                        gsheetsWorker.delete_rows(indice_minimo, indice_maximo)
+
+                dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                dataQuery.columns = dataQuery.iloc[0]
+                dataQuery = dataQuery.iloc[1:]
+                dataQuery = dataQuery.reset_index()
+
+                gsheetsWorker.sheetUpdaterOccupancy(data, dataQuery)
+                
             except Exception as e:
-                print('Error uploading data: {} . Error is: {}'.format(sheet,e))
+                print('Error uploading data: {}. El error es: {}'.format(sheet, e))
                 pass
             
         elif sh == "Agent Details":
@@ -568,7 +686,7 @@ def gsheetsUploader(data,spsh,sh):
                     dataQuery = dataQuery.iloc[1:]
                     dataQuery = dataQuery.reset_index()
 
-                    gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery, sheet)
+                    gsheetsWorker = GsheetsWorker.GSheetsWorker(spreadSheetQuery,sheetQuery)
 
                     fecha_actual = datetime.now().date()
                     fecha_hace_7_dias = fecha_actual - timedelta(days=7)
@@ -584,16 +702,24 @@ def gsheetsUploader(data,spsh,sh):
                         #dataFiltrado = data[(data["date"] >= fecha_hace_7_dias) & (data["date"] <= fecha_actual)]
                         row_indices = dataQueryFiltrado.index.tolist()
 
-                        indice_minimo = min(row_indices) +2 
-                        indice_maximo = max(row_indices) +2
+                        if len (row_indices) > 1: 
+                            indice_minimo = min(row_indices) +2 
+                            indice_maximo = max(row_indices) +2
 
-                    print("Índice mínimo:", indice_minimo)
-                    print("Índice máximo:", indice_maximo)
+                            print("Índice mínimo:", indice_minimo)
+                            print("Índice máximo:", indice_maximo)
+                            dataQuery["date"] = pd.to_datetime(dataQuery["date"]).dt.strftime('%Y-%m-%d')
+                            gsheetsWorker.delete_rows(indice_minimo, indice_maximo)
 
-                    gsheetsWorker.sheetUpdaterAgentDatails(data, dataQuery, indice_minimo, indice_maximo)
-            
+                    dataQuery = pd.DataFrame(sheetQuery.get_all_values())
+                    dataQuery.columns = dataQuery.iloc[0]
+                    dataQuery = dataQuery.iloc[1:]
+                    dataQuery = dataQuery.reset_index()
+
+                    gsheetsWorker.sheetUpdaterAgentDatails(data, dataQuery)
+                
                 except Exception as e:
-                    print('Error uploading data: {} . Error is: {}'.format(elemento,e))
+                    print('Error uploading data: {}. El error es: {}'.format(elemento, e))
                     pass
             
     except Exception as e:
@@ -607,8 +733,8 @@ if __name__ == '__main__':
 
         filelist = [ f for f in os.listdir(downloadDir)]
 
-        #workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy","Agent Details"]
-        workbookEOD = ["Schedules"]
+        workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy","Agent Details"]
+        #workbookEOD = ["Agent Details"]
 
         spreadsheetsSheets = {
             "Agent Schedules": "New_Agent_schedules"
