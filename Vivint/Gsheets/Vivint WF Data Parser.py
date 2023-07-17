@@ -21,7 +21,6 @@ import warnings
 import importlib.util
 drive = Path(__file__).drive
 from tqdm import tqdm
-
 import GsheetsWorker
 import gspread
 import time
@@ -734,7 +733,7 @@ if __name__ == '__main__':
         filelist = [ f for f in os.listdir(downloadDir)]
 
         workbookEOD = ["Agent Schedules","Schedules","Adherence","Agent Activity","Occupancy","Agent Details"]
-        #workbookEOD = ["Agent Details"]
+        #workbookEOD = ["Agent Schedules"]
 
         spreadsheetsSheets = {
             "Agent Schedules": "New_Agent_schedules"
