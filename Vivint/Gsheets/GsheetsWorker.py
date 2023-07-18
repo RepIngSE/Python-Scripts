@@ -41,7 +41,7 @@ class GSheetsWorker():
         self.spreadSheet = spreadSheet
         self.sheet = sheet
     
-    def get_sec(self, time_str):
+    def get_sec(self, time_str):  
         h, m, s = time_str.split(':')
         return int(h) * 3600 + int(m) * 60 + int(s)
 
