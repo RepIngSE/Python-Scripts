@@ -161,3 +161,4 @@ for count, value in enumerate(baldosa):
 
 # Imprime los resultados finales de las fallas detectadas y totales
 print(fallas_totales, falla_detectada)
+
