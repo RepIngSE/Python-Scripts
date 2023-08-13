@@ -14,3 +14,4 @@ elif htrabajo >= 49:
   print((htrabajo - 48)*3*vhora + 2*8*vhora + sbase)
 else:
   print("NA")
+
